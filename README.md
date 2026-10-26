@@ -2,6 +2,13 @@
 
 通过 USB 或 WiFi 把 Android 手机投屏到电脑，用鼠标点击、滑动、滚轮滚动，用电脑键盘直接打字（英文）。
 
+## 下载
+
+- **Windows 免安装版**：到 [Releases](https://github.com/q454578219/connect-mobile/releases) 下载
+  `ConnectMobile-0.1.0-win-x64-portable.zip`，解压后双击 `Connect Mobile.exe` 即可。
+  已内置 adb，不需要装 Node 或 Android SDK；**未做代码签名**，SmartScreen 提示「未知发布者」时选「更多信息 → 仍要运行」。
+- **从源码跑**：见下方「跑起来」。
+
 ## 功能
 
 | 功能 | 说明 |
