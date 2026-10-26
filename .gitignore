@@ -34,3 +34,9 @@ resources/tools/ADBKeyboard.apk
 # 兜底：platform-tools 的可执行文件一律不入库（NOTICE.txt / source.properties 保留）
 resources/tools/*.exe
 resources/tools/*.dll
+
+# 发布产物与临时文件
+release/
+.locale_bak/
+.*_release_body.md
+.gt_*.json

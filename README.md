@@ -4,9 +4,16 @@
 
 ## 下载
 
-- **Windows 免安装版**：到 [Releases](https://github.com/q454578219/connect-mobile/releases) 下载
-  `ConnectMobile-0.1.0-win-x64-portable.zip`，解压后双击 `Connect Mobile.exe` 即可。
-  已内置 adb，不需要装 Node 或 Android SDK；**未做代码签名**，SmartScreen 提示「未知发布者」时选「更多信息 → 仍要运行」。
+两个站点同步托管，国内建议走 Gitee：
+
+| 站点 | 安装包 | 源码 |
+|---|---|---|
+| **Gitee**（国内快） | [ConnectMobile-0.1.0-win-x64-portable.7z](https://gitee.com/454578219/connect-mobile/releases/download/v0.1.0/ConnectMobile-0.1.0-win-x64-portable.7z) | [gitee.com/454578219/connect-mobile](https://gitee.com/454578219/connect-mobile) |
+| **GitHub** | [Releases](https://github.com/q454578219/connect-mobile/releases)（`.zip`） | [github.com/q454578219/connect-mobile](https://github.com/q454578219/connect-mobile) |
+
+- 解压后双击 `Connect Mobile.exe` 即可运行，**已内置 adb**，不需要装 Node 或 Android SDK。
+- Gitee 那份是 `.7z`（压缩后 69MB，`.zip` 会超过 Gitee 单文件 100MB 上限）：Windows 11 可直接双击解压；Windows 10 需装 [7-Zip](https://www.7-zip.org/)。
+- **未做代码签名**，SmartScreen 提示「未知发布者」时选「更多信息 → 仍要运行」。
 - **从源码跑**：见下方「跑起来」。
 
 ## 功能

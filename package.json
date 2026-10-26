@@ -43,6 +43,7 @@
       "output": "release"
     },
     "files": ["out/**/*", "package.json"],
+    "electronLanguages": ["zh-CN", "en-US"],
     "extraResources": [
       {
         "from": "resources/tools",
