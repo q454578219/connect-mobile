@@ -1,0 +1,60 @@
+{
+  "name": "connect-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "description": "通过 USB 把 Android 手机投屏到电脑，并在电脑上模拟点击 / 滑动 / 键盘输入",
+  "main": "out/main/index.js",
+  "scripts": {
+    "fetch-tools": "node scripts/fetch-tools.mjs",
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "start": "electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "test": "node --experimental-strip-types --no-warnings --test scripts/self-test.mjs",
+    "test:h264": "node --experimental-strip-types --no-warnings scripts/test-h264.mjs",
+    "test:e2e": "node scripts/e2e-full.cjs",
+    "test:gestures": "node scripts/e2e-gestures.cjs",
+    "test:tap": "node scripts/verify-tap-precision.cjs",
+    "test:keyboard": "node scripts/verify-keyboard.cjs",
+    "package": "electron-vite build && electron-builder --win --x64"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.17",
+    "@types/react-dom": "^18.3.5",
+    "@types/ws": "^8.5.13",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "electron": "^33.3.1",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^2.3.0",
+    "postcss": "^8.4.49",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11",
+    "ws": "^8.18.0"
+  },
+  "build": {
+    "appId": "com.connectmobile.app",
+    "productName": "Connect Mobile",
+    "directories": {
+      "output": "release"
+    },
+    "files": ["out/**/*", "package.json"],
+    "extraResources": [
+      {
+        "from": "resources/tools",
+        "to": "tools"
+      }
+    ],
+    "win": {
+      "target": ["nsis"]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

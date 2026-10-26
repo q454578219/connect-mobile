@@ -1,0 +1,1411 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Connect Mobile · 用电脑直接操作 Android 手机</title>
+<meta name="description" content="USB / WiFi 免线投屏，电脑鼠标键盘直接操作 Android 手机。Electron 桌面应用，H.264 硬解，100+ fps，零手机端部署。" />
+<style>
+:root{
+  --bg:#070a0e;
+  --panel:#0d1218;
+  --panel2:#111823;
+  --line:rgba(255,255,255,.08);
+  --line2:rgba(255,255,255,.14);
+  --text:#e6edf3;
+  --muted:#8a97a6;
+  --dim:#5f6b7a;
+  --sky:#38bdf8;
+  --emerald:#34d399;
+  --rose:#fb7185;
+  --amber:#fbbf24;
+  --mono:ui-monospace,"Cascadia Mono","SFMono-Regular",Consolas,monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Segoe UI","Microsoft YaHei UI","PingFang SC",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(900px 500px at 12% -8%, rgba(56,189,248,.13), transparent 60%),
+    radial-gradient(800px 460px at 92% 4%, rgba(52,211,153,.10), transparent 62%),
+    linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
+  background-size:auto,auto,64px 64px,64px 64px;
+  background-attachment:fixed, fixed, fixed, fixed;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+a{color:inherit;text-decoration:none}
+
+/* ---------- nav ---------- */
+.nav{position:sticky;top:0;z-index:60;backdrop-filter:blur(14px);background:rgba(7,10,14,.72);border-bottom:1px solid var(--line)}
+.nav-in{display:flex;align-items:center;gap:14px;height:58px}
+.logo{display:flex;align-items:center;gap:9px;font-weight:700;letter-spacing:.2px}
+.logo-mark{width:22px;height:22px;border-radius:6px;background:linear-gradient(145deg,var(--sky),var(--emerald));display:grid;place-items:center;font-size:11px;color:#04121a;font-weight:800}
+.nav-links{display:flex;gap:22px;margin-left:auto;font-size:13px;color:var(--muted)}
+.nav-links a:hover{color:var(--text)}
+.nav-tag{font-size:11px;color:var(--dim);border:1px solid var(--line2);border-radius:999px;padding:3px 9px;margin-left:14px}
+@media(max-width:820px){.nav-links{display:none}.nav-tag{display:none}}
+
+/* ---------- hero ---------- */
+.hero{padding:88px 24px 56px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:#9fe8d4;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.22);padding:5px 12px;border-radius:999px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--emerald);box-shadow:0 0 0 3px rgba(52,211,153,.16)}
+h1{font-size:clamp(36px,5.6vw,60px);line-height:1.08;letter-spacing:-.025em;margin:22px 0 0;font-weight:700}
+h1 .grad{background:linear-gradient(100deg,var(--sky),var(--emerald) 70%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{max-width:660px;margin:20px 0 0;font-size:16.5px;line-height:1.85;color:#b6c2ce}
+.lede b{color:var(--text);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:26px}
+.chip{font-size:12.5px;color:#c3cedb;border:1px solid var(--line2);background:rgba(255,255,255,.03);padding:6px 11px;border-radius:8px}
+.chip b{color:var(--sky);font-weight:600}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:10px;font-size:14.5px;font-weight:600;border:1px solid transparent;cursor:pointer;transition:transform .15s ease,background .15s ease,border-color .15s ease}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:linear-gradient(150deg,#0ea5e9,#0284c7);color:#fff;box-shadow:0 14px 34px -14px rgba(14,165,233,.85)}
+.btn-primary:hover{background:linear-gradient(150deg,#38bdf8,#0ea5e9)}
+.btn-ghost{background:rgba(255,255,255,.04);border-color:var(--line2);color:var(--text)}
+.btn-ghost:hover{background:rgba(255,255,255,.08)}
+.hero-note{margin-top:18px;font-size:12.5px;color:var(--dim)}
+
+/* ---------- section chrome ---------- */
+section{padding:76px 0;border-top:1px solid var(--line)}
+.sec-head{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:30px}
+.kicker{font-family:var(--mono);font-size:11.5px;color:var(--sky);letter-spacing:.14em;text-transform:uppercase}
+h2{font-size:clamp(24px,3vw,32px);margin:8px 0 0;letter-spacing:-.02em;font-weight:700}
+.sub{color:var(--muted);font-size:14px;line-height:1.8;margin:10px 0 0;max-width:720px}
+p{margin:0}
+
+/* ---------- app shell ---------- */
+.app{
+  border:1px solid var(--line2);border-radius:14px;overflow:hidden;background:#0b0f14;
+  box-shadow:0 50px 90px -40px #000,0 0 0 1px rgba(255,255,255,.02) inset;
+  display:flex;flex-direction:column;height:660px;position:relative;user-select:none;
+}
+.app-head{flex:0 0 50px;display:flex;align-items:center;gap:10px;padding:0 13px;border-bottom:1px solid var(--line);background:#0c1117}
+.icon-btn{width:30px;height:30px;border-radius:7px;border:1px solid transparent;background:transparent;color:#a9b6c4;cursor:pointer;font-size:14px;display:grid;place-items:center}
+.icon-btn:hover{background:rgba(255,255,255,.07);color:#fff}
+.app-title{font-size:14.5px;font-weight:600;letter-spacing:.2px}
+.app-sub{font-size:11.5px;color:var(--dim);margin-left:2px}
+.app-head-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.btn-sm{padding:7px 13px;border-radius:8px;font-size:12.5px;font-weight:600;border:1px solid transparent;cursor:pointer;color:#fff;transition:background .15s}
+.btn-wireless{background:rgba(255,255,255,.08);color:#d7e0e9}
+.btn-wireless:hover{background:rgba(255,255,255,.15)}
+.btn-start{background:#059669}
+.btn-start:hover{background:#10b981}
+.btn-start[disabled]{opacity:.4;cursor:not-allowed}
+.btn-stop{background:#e11d48}
+.btn-stop:hover{background:#f43f5e}
+.app-body{flex:1;display:flex;min-height:0}
+
+/* sidebar */
+.side{flex:0 0 244px;display:flex;flex-direction:column;border-right:1px solid var(--line);min-height:0;background:#0a0e13}
+.side[hidden]{display:none}
+.side-label{padding:9px 12px;font-size:11.5px;color:var(--muted);font-weight:600}
+.dev-list{flex:1;min-height:0;overflow-y:auto}
+.dev{display:block;width:100%;text-align:left;padding:8px 12px;background:transparent;border:0;color:var(--text);cursor:pointer;font-family:inherit}
+.dev:hover{background:rgba(255,255,255,.05)}
+.dev[aria-selected="true"]{background:rgba(2,132,199,.25);color:#bae6fd}
+.dev-name{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dev-meta{font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.dev[aria-selected="true"] .dev-meta{color:#7dd3fc}
+.side-foot{border-top:1px solid var(--line);padding:11px 12px;display:flex;flex-direction:column;gap:9px}
+.field-label{font-size:11.5px;color:var(--muted);display:block}
+select{width:100%;margin-top:5px;background:#1b2430;color:#e6edf3;border:1px solid var(--line2);border-radius:7px;padding:6px 8px;font-size:12.5px;font-family:inherit}
+select[disabled]{opacity:.45}
+.row{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--muted)}
+.switch{position:relative;width:34px;height:19px;border-radius:999px;background:rgba(255,255,255,.12);border:0;cursor:pointer;flex:0 0 auto;transition:background .2s}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:left .2s}
+.switch[aria-checked="true"]{background:#059669}
+.switch[aria-checked="true"]::after{left:17px}
+.side-tip{font-size:10.5px;line-height:1.65;color:var(--dim)}
+.kb{border-top:1px solid var(--line);padding:11px 12px}
+.kb input{width:100%;background:#1b2430;border:1px solid var(--line2);border-radius:7px;padding:7px 9px;color:#e6edf3;font-size:12.5px;font-family:inherit;outline:none}
+.kb input:focus{border-color:#0ea5e9}
+.kb-note{font-size:10.5px;color:var(--dim);margin-top:6px;line-height:1.5}
+.resizer{width:4px;flex:0 0 4px;cursor:col-resize;background:transparent;transition:background .15s}
+.resizer:hover,.resizer.on{background:rgba(56,189,248,.45)}
+
+/* main / stage */
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.stage{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 42%,#101a25,#060a0d 72%)}
+.stage::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:radial-gradient(rgba(255,255,255,.055) 1px,transparent 1px);background-size:22px 22px;opacity:.5}
+.phone-wrap{position:relative;height:92%;aspect-ratio:1080/2400;max-width:94%;z-index:1;opacity:0;transform:scale(.985);transition:opacity .45s ease,transform .45s ease}
+.phone-wrap.live{opacity:1;transform:none}
+.phone{position:absolute;inset:0;border-radius:20px;overflow:hidden;background:#000;box-shadow:0 0 0 1px rgba(255,255,255,.1),0 30px 70px -25px #000;
+  touch-action:none;
+  cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='9' fill='rgba(56,189,248,0.25)' stroke='rgba(125,211,252,0.9)' stroke-width='1.5'/%3E%3Ccircle cx='14' cy='14' r='2' fill='white'/%3E%3C/svg%3E") 14 14,crosshair}
+.screen{position:absolute;inset:0;overflow:hidden;font-family:"Segoe UI","Microsoft YaHei UI",system-ui,sans-serif}
+.placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--dim);font-size:12.5px;text-align:center;padding:20px}
+.placeholder b{color:#b6c2ce;font-size:13.5px;font-weight:600}
+.spin{width:22px;height:22px;border:2px solid rgba(255,255,255,.14);border-top-color:var(--sky);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* phone internals */
+.android{position:absolute;inset:0;display:flex;flex-direction:column;color:#fff;
+  background:linear-gradient(160deg,#27406b 0%,#16233c 45%,#0b1220 100%)}
+.android::before{content:"";position:absolute;inset:0;background:
+  radial-gradient(340px 240px at 78% 12%,rgba(96,165,250,.45),transparent 70%),
+  radial-gradient(300px 260px at 12% 78%,rgba(52,211,153,.28),transparent 72%);}
+.status{position:relative;display:flex;align-items:center;justify-content:space-between;padding:11px 18px 4px;font-size:10.5px;letter-spacing:.2px;color:rgba(255,255,255,.92);flex:0 0 auto}
+.status-r{display:flex;gap:6px;align-items:center}
+.bar{width:3px;border-radius:1px;background:rgba(255,255,255,.85)}
+.batt{width:18px;height:9px;border:1px solid rgba(255,255,255,.75);border-radius:2px;position:relative}
+.batt::after{content:"";position:absolute;inset:1.5px;right:5px;background:#fff;border-radius:1px}
+.home-head{position:relative;padding:10px 20px 0;flex:0 0 auto}
+.clock{font-size:clamp(38px,4.6vw,52px);font-weight:300;letter-spacing:-.02em;line-height:1;text-shadow:0 2px 18px rgba(0,0,0,.3)}
+.date{font-size:11px;color:rgba(255,255,255,.72);margin-top:7px}
+.grid{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:14px 6px;padding:22px 14px 8px;flex:1;align-content:start}
+.appicon{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer}
+.appicon .sq{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-size:19px;box-shadow:0 6px 14px -6px rgba(0,0,0,.7);transition:transform .12s}
+.appicon:active .sq{transform:scale(.9)}
+.appicon span{font-size:9px;color:rgba(255,255,255,.9);text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.dock{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 10px 6px;padding:9px 6px;border-radius:20px;background:rgba(255,255,255,.14);backdrop-filter:blur(8px);flex:0 0 auto}
+.dock .appicon .sq{width:40px;height:40px;border-radius:12px;font-size:17px}
+.gesture{flex:0 0 auto;height:14px;display:grid;place-items:center}
+.gesture i{display:block;width:34%;height:3px;border-radius:99px;background:rgba(255,255,255,.5)}
+
+/* settings app */
+.appscreen{position:absolute;inset:0;display:flex;flex-direction:column;background:#f4f6f9;color:#1b2430}
+.appbar{flex:0 0 auto;padding:12px 14px 8px;display:flex;align-items:center;gap:10px;background:#fff;border-bottom:1px solid #e3e8ef}
+.appbar .bk{width:24px;height:24px;border:0;background:transparent;font-size:17px;color:#1b2430;cursor:pointer;line-height:1}
+.appbar h3{font-size:14px;margin:0;font-weight:600}
+.search{margin:9px 14px;padding:7px 11px;border-radius:18px;background:#e9edf2;font-size:11.5px;color:#5b6673;display:flex;align-items:center;gap:7px;flex:0 0 auto}
+.search .q{color:#1b2430}
+.caret{width:1px;height:12px;background:#0ea5e9;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.list{flex:1;min-height:0;overflow:hidden;position:relative}
+.list-inner{padding:0 0 8px;transition:transform .28s cubic-bezier(.22,.7,.3,1);will-change:transform}
+.list-inner.dragging{transition:none}
+.item{display:flex;align-items:center;gap:11px;padding:11px 14px;background:#fff;border-bottom:1px solid #eef1f5}
+.item .ic{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-size:14px;flex:0 0 auto}
+.item .tx{font-size:12.5px;color:#1b2430}
+.item .tx small{display:block;color:#7c8794;font-size:10px;margin-top:1px}
+.item .go{margin-left:auto;color:#b9c2cc;font-size:12px}
+.empty{padding:26px 16px;text-align:center;color:#8b96a3;font-size:11.5px}
+
+/* recents */
+.recents{position:absolute;inset:0;background:rgba(8,12,18,.82);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;gap:14px;padding:22px}
+.card{width:38%;aspect-ratio:9/16;border-radius:14px;background:#141c27;border:1px solid rgba(255,255,255,.14);overflow:hidden;display:flex;flex-direction:column;cursor:pointer;box-shadow:0 16px 30px -14px #000}
+.card .ch{height:22px;display:flex;align-items:center;gap:5px;padding:0 7px;background:rgba(255,255,255,.06);font-size:8px;color:#c3cedb}
+.card .cb{flex:1;background:linear-gradient(160deg,#1d2b40,#0f1622)}
+.card .cb.light{background:#f4f6f9}
+
+/* shade / lock / overlays */
+.shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,15,22,.97),rgba(10,15,22,.9));transform:translateY(-100%);transition:transform .3s cubic-bezier(.22,.7,.3,1);padding:16px 14px;color:#fff}
+.shade.on{transform:none}
+.shade .qk{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:26px}
+.shade .qk i{aspect-ratio:1;border-radius:12px;background:rgba(255,255,255,.14);display:grid;place-items:center;font-size:13px;font-style:normal}
+.shade .qk i.on{background:#0ea5e9}
+.shade .nt{margin-top:16px;background:rgba(255,255,255,.1);border-radius:12px;padding:9px 11px;font-size:10.5px;line-height:1.5}
+.shade .nt b{display:block;font-size:10px;color:#8fd6ff;margin-bottom:2px;font-weight:600}
+.lock{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#fff;
+  background:radial-gradient(circle at 50% 30%,#1b2942,#05080d 78%);cursor:pointer}
+.lock .t{font-size:44px;font-weight:300}
+.lock .d{font-size:11px;color:rgba(255,255,255,.6)}
+.lock .lk{margin-top:26px;font-size:15px;opacity:.8}
+.lock .up{position:absolute;bottom:22px;font-size:10.5px;color:rgba(255,255,255,.55)}
+.vol{position:absolute;left:10px;top:34%;width:34px;border-radius:10px;background:rgba(0,0,0,.62);padding:7px 0;display:flex;flex-direction:column;align-items:center;gap:6px;color:#fff;font-size:9px}
+.volbar{width:5px;height:86px;border-radius:3px;background:rgba(255,255,255,.22);display:flex;align-items:flex-end;overflow:hidden}
+.volbar i{display:block;width:100%;background:#fff;border-radius:3px;transition:height .15s}
+.gone{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .3s}
+.gone.on{opacity:.95}
+.gone span{position:absolute;left:0;right:0;bottom:34px;text-align:center;font-size:10px;color:rgba(255,255,255,.32)}
+
+/* mask layers inside phone */
+.mask-layer{position:absolute;inset:0;pointer-events:none;z-index:9}
+
+/* ripple + toast + hud */
+.ripple{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;
+  border:1.5px solid rgba(125,211,252,.95);background:rgba(56,189,248,.28);pointer-events:none;z-index:20;
+  animation:rip .5s ease-out forwards}
+@keyframes rip{from{transform:scale(.35);opacity:1}to{transform:scale(1.5);opacity:0}}
+.toast{position:absolute;left:50%;bottom:66px;transform:translate(-50%,8px);z-index:30;
+  background:rgba(8,12,17,.92);border:1px solid var(--line2);border-radius:8px;padding:7px 12px;
+  font-family:var(--mono);font-size:11px;color:#bfe9ff;white-space:nowrap;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.hud{position:absolute;right:12px;top:11px;z-index:5;font-family:var(--mono);font-size:10.5px;color:#7f8d9b;
+  background:rgba(6,10,14,.7);border:1px solid var(--line);border-radius:6px;padding:4px 8px;display:flex;gap:9px;align-items:center}
+.hud b{color:#b6c2ce;font-weight:500}
+.hud .demo{color:var(--amber);border-left:1px solid var(--line2);padding-left:9px}
+.help{position:absolute;left:12px;top:11px;z-index:6}
+.help-btn{width:26px;height:26px;border-radius:7px;border:0;background:rgba(0,0,0,.62);color:#b6c2ce;font-size:12px;cursor:pointer}
+.help-btn:hover{background:rgba(0,0,0,.85);color:#fff}
+.help-panel{position:absolute;left:0;top:32px;width:228px;background:rgba(6,10,14,.9);border:1px solid var(--line2);border-radius:9px;padding:10px 12px;font-size:10.5px;line-height:1.85;color:#a9b6c4;backdrop-filter:blur(8px)}
+.help-panel b{display:block;color:#e6edf3;font-size:11px;margin-bottom:4px}
+
+/* toolbar */
+.toolbar{flex:0 0 52px;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;border-top:1px solid var(--line);background:#0c1117;overflow:hidden}
+.tb{height:36px;min-width:40px;border-radius:8px;border:0;background:rgba(255,255,255,.08);color:#dfe7ef;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;flex:0 0 auto;font-family:inherit;transition:background .15s}
+.tb:hover{background:rgba(56,189,248,.6)}
+.tb[disabled]{opacity:.3;cursor:not-allowed}
+.tb.em:hover{background:rgba(16,185,129,.6)}
+.tb-label{font-size:11px}
+.tb-sep{width:1px;height:22px;background:var(--line2);margin:0 5px;flex:0 0 auto}
+.tb.on-sky{background:rgba(2,132,199,.85);color:#fff}
+.tb.on-amber{background:rgba(217,119,6,.85);color:#fff}
+.tb.on-indigo{background:rgba(79,70,229,.85);color:#fff}
+.mask-pop{position:absolute;right:70px;bottom:60px;z-index:40;width:252px;background:#101823;border:1px solid var(--line2);border-radius:10px;padding:12px;box-shadow:0 20px 40px -18px #000;display:none}
+.mask-pop.on{display:block}
+.mask-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px}
+.mask-grid button{padding:6px;border:0;border-radius:6px;background:rgba(255,255,255,.09);color:#cfd9e3;font-size:11px;cursor:pointer;font-family:inherit}
+.mask-grid button:hover{background:rgba(255,255,255,.18)}
+.mask-grid button[aria-pressed="true"]{background:#4f46e5;color:#fff}
+.mask-row{display:flex;align-items:center;justify-content:space-between;font-size:10.5px;color:#a9b6c4;margin:7px 0}
+.mask-row.stack{display:block}
+.mask-row input[type=range]{width:100%;accent-color:#6366f1;margin-top:4px}
+.mask-note{font-size:10px;color:var(--dim);line-height:1.6;margin-top:8px}
+.mini-btns{display:flex;gap:4px}
+.mini-btns button{border:0;border-radius:5px;background:rgba(255,255,255,.09);color:#cfd9e3;font-size:10.5px;padding:4px 8px;cursor:pointer;font-family:inherit}
+.mini-btns button[aria-pressed="true"]{background:#4f46e5;color:#fff}
+input[type=color]{width:52px;height:26px;background:transparent;border:1px solid var(--line2);border-radius:6px;padding:0;cursor:pointer}
+
+/* mobile */
+@media(max-width:900px){
+  .app{height:600px}
+  .side{display:none}
+  .resizer{display:none}
+  .app-sub{display:none}
+  .tb-label{display:none}
+  .tb.opt{display:none}
+  .mask-pop{right:8px}
+  .hero{padding:56px 24px 40px}
+}
+
+/* ---------- diagram ---------- */
+.panel{background:linear-gradient(180deg,rgba(255,255,255,.028),rgba(255,255,255,.012));border:1px solid var(--line);border-radius:14px;padding:22px}
+.flow{width:100%;height:auto;display:block}
+.flow text{font-family:"Segoe UI","Microsoft YaHei UI",system-ui,sans-serif}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:18px}
+.note{font-size:12.5px;line-height:1.75;color:var(--muted)}
+.note b{display:block;color:var(--text);font-size:13px;margin-bottom:3px;font-weight:600}
+code{font-family:var(--mono);font-size:12px;background:rgba(255,255,255,.07);padding:1.5px 5px;border-radius:4px;color:#a5e3ff}
+
+/* ---------- feature grid ---------- */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:14px}
+.feat{background:rgba(255,255,255,.026);border:1px solid var(--line);border-radius:12px;padding:16px 17px;transition:border-color .2s,background .2s}
+.feat:hover{border-color:rgba(56,189,248,.32);background:rgba(56,189,248,.045)}
+.feat .fi{font-size:16px;width:30px;height:30px;border-radius:8px;background:rgba(56,189,248,.12);display:grid;place-items:center;margin-bottom:10px}
+.feat h4{margin:0 0 5px;font-size:13.5px;font-weight:600}
+.feat p{font-size:12.5px;line-height:1.7;color:var(--muted)}
+
+/* ---------- two col ---------- */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:820px){.two{grid-template-columns:1fr}}
+.box{border:1px solid var(--line);border-radius:12px;padding:20px;background:rgba(255,255,255,.022)}
+.box h3{font-size:15px;margin:0 0 12px;font-weight:600;display:flex;align-items:center;gap:8px}
+.box ul{margin:0;padding-left:18px;font-size:12.5px;line-height:1.9;color:var(--muted)}
+.box li::marker{color:var(--dim)}
+.box li b{color:#cdd8e3;font-weight:600}
+.warn{border-color:rgba(251,191,36,.22);background:rgba(251,191,36,.045)}
+.warn h3 .dot{background:var(--amber);box-shadow:0 0 0 3px rgba(251,191,36,.16)}
+
+/* ---------- download ---------- */
+.dl{display:grid;grid-template-columns:1.15fr 1fr;gap:18px;align-items:start}
+@media(max-width:820px){.dl{grid-template-columns:1fr}}
+.dl-card{border:1px solid var(--line2);border-radius:14px;padding:26px;background:linear-gradient(165deg,rgba(56,189,248,.1),rgba(255,255,255,.018) 45%,rgba(255,255,255,.012))}
+.dl-card h3{margin:0 0 6px;font-size:20px}
+.dl-card p{color:var(--muted);font-size:13px;line-height:1.75}
+.req{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 20px}
+.req span{font-size:11.5px;color:#b6c2ce;border:1px solid var(--line2);border-radius:6px;padding:4px 9px}
+.steps{counter-reset:s;list-style:none;padding:0;margin:0}
+.steps li{counter-increment:s;position:relative;padding-left:30px;font-size:12.5px;line-height:1.7;color:var(--muted);margin-bottom:11px}
+.steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:19px;height:19px;border-radius:50%;background:rgba(56,189,248,.16);color:var(--sky);font-size:10.5px;display:grid;place-items:center;font-family:var(--mono)}
+footer{border-top:1px solid var(--line);padding:30px 0 44px;font-size:11.5px;color:var(--dim);line-height:1.9}
+footer b{color:#a9b6c4;font-weight:600}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(3,5,8,.72);backdrop-filter:blur(4px)}
+.modal.on{display:flex}
+.modal-card{width:min(440px,100%);background:#0f1620;border:1px solid var(--line2);border-radius:14px;padding:22px;box-shadow:0 30px 60px -20px #000}
+.modal-card h3{margin:0 0 8px;font-size:16px}
+.modal-card p{font-size:12.5px;line-height:1.8;color:var(--muted);margin:0 0 8px}
+.modal-card .btn{margin-top:14px}
+.mono-sm{font-family:var(--mono);font-size:11px;color:#8fd6ff;word-break:break-all}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap nav-in">
+    <div class="logo"><span class="logo-mark">CM</span> Connect Mobile</div>
+    <div class="nav-links">
+      <a href="#demo">在线体验</a>
+      <a href="#how">它是怎么工作的</a>
+      <a href="#features">功能</a>
+      <a href="#limits">限制与边界</a>
+      <a href="#download">下载</a>
+    </div>
+    <span class="nav-tag">WorkBuddy 1024 造物节</span>
+  </div>
+</nav>
+
+<header class="wrap hero">
+  <div class="eyebrow"><span class="dot"></span>参赛作品 · 桌面应用（Electron）</div>
+  <h1>一根线，把手机<br><span class="grad">搬进电脑里</span></h1>
+  <p class="lede">
+    Connect Mobile 通过 USB 或同一 WiFi 把 Android 手机投屏到电脑，然后<b>直接用鼠标点击、拖动、滚轮翻页，用键盘打字</b>。
+    画面走系统自带的 <b>H.264 硬解</b>，真机实测 100+ fps；手机端<b>不需要装任何东西</b>，不用 root，不推二进制。
+  </p>
+  <div class="chips">
+    <span class="chip"><b>100+ fps</b> 真机实测</span>
+    <span class="chip">零手机端部署</span>
+    <span class="chip">像素级点击精度</span>
+    <span class="chip">USB / WiFi 双通道</span>
+    <span class="chip">约 4k 行 TypeScript</span>
+  </div>
+  <div class="cta">
+    <a class="btn btn-primary" href="#demo">先玩一下在线演示 ↓</a>
+    <a class="btn btn-ghost" href="#download">下载 Windows 版</a>
+  </div>
+  <p class="hero-note">需要 Windows 10 / 11 + 一台开启「USB 调试」的 Android 手机 · 页面下方是可交互的界面复刻，不连接真实设备</p>
+</header>
+
+<section id="demo">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <div class="kicker">Live demo</div>
+        <h2>在线体验（界面复刻）</h2>
+        <p class="sub">下面是应用真实界面的 1:1 复刻，交互逻辑也是照着源码实现的：点画面 = 点手机，按住拖动 = 滑动，滚轮 = 上下滚动，数字键 1/2/3/4 = 四向滑动。画面与帧率是模拟的——真机画面需要本地进程去跑 adb，浏览器给不了这个能力。</p>
+      </div>
+    </div>
+
+    <div class="app" id="app">
+      <!-- 顶栏 -->
+      <div class="app-head">
+        <button class="icon-btn" id="btnSidebar" title="收起侧栏">⇤</button>
+        <span class="app-title">Connect Mobile</span>
+        <span class="app-sub">USB / WiFi 投屏 · 电脑控制手机</span>
+        <div class="app-head-right">
+          <button class="btn-sm btn-wireless" id="btnWireless">无线连接</button>
+          <button class="btn-sm btn-start" id="btnStart">开始投屏</button>
+          <button class="btn-sm btn-stop" id="btnStop" hidden>停止投屏</button>
+        </div>
+      </div>
+
+      <div class="app-body">
+        <!-- 侧栏 -->
+        <aside class="side" id="side">
+          <div class="side-label" id="devCount">设备（0）</div>
+          <div class="dev-list" id="devList"></div>
+
+          <div class="side-foot">
+            <label class="field-label">投屏宽度
+              <select id="selWidth">
+                <option value="0">原始分辨率</option>
+                <option value="360">360 px</option>
+                <option value="540">540 px</option>
+                <option value="720" selected>720 px</option>
+                <option value="1080">1080 px</option>
+              </select>
+            </label>
+            <div class="row">
+              <span title="提高采集码率，明显减少高分辨率下的丢帧">流畅优先</span>
+              <button class="switch" role="switch" aria-checked="false" id="swFps" aria-label="流畅优先"></button>
+            </div>
+            <div class="row">
+              <span title="收起侧栏时把窗口缩成贴合手机画面的小窗">收起时缩小窗口</span>
+              <button class="switch" role="switch" aria-checked="true" id="swCompact" aria-label="收起时缩小窗口"></button>
+            </div>
+            <p class="side-tip">720 一般是清晰度与流畅度的平衡点；掉帧就打开「流畅优先」并降低投屏宽度。</p>
+          </div>
+
+          <div class="kb">
+            <input id="kbInput" placeholder="点这里捕获键盘，直接打字到手机" autocomplete="off" spellcheck="false" />
+            <div class="kb-note">只支持 ASCII（<code>adb input text</code> 的限制），中文请用手机自己的输入法</div>
+          </div>
+        </aside>
+        <div class="resizer" id="resizer" title="拖动调整侧栏宽度"></div>
+
+        <!-- 主区 -->
+        <div class="main">
+          <div class="stage" id="stage">
+            <div class="help">
+              <button class="help-btn" id="helpBtn">?</button>
+              <div class="help-panel" id="helpPanel" hidden>
+                <b>操作方式</b>
+                滚轮 = 上下滚动 · 左右滚轮 = 翻页<br>
+                热键 1/2/3/4 = 左滑/右滑/上滑/下滑<br>
+                按住拖动 = 任意滑动 · 点画面 = 点手机<br>
+                打字捕获中热键自动让路
+              </div>
+            </div>
+
+            <div class="hud" id="hud"><span id="hudRes">—</span><span id="hudFps">— fps</span><span id="hudMs">— ms</span><span class="demo">模拟数据</span></div>
+
+            <div class="phone-wrap" id="phoneWrap">
+              <div class="phone" id="phone">
+                <div class="screen" id="screen"></div>
+                <div class="mask-layer" id="maskNight" hidden></div>
+                <div class="mask-layer" id="maskDim" hidden></div>
+                <div class="gone" id="gone"><span>屏幕已压至最低亮度 · 投屏仍在继续</span></div>
+              </div>
+            </div>
+
+            <div class="placeholder" id="placeholder" hidden>
+              <div class="spin"></div>
+              <b>正在连接设备…</b>
+              <span>adb exec-out screenrecord</span>
+            </div>
+
+            <div class="toast" id="toast">tap 540 · 1200</div>
+          </div>
+
+          <div class="toolbar">
+            <button class="tb" data-nav="back" title="返回">◀</button>
+            <button class="tb" data-nav="home" title="桌面">⌂</button>
+            <button class="tb" data-nav="appSwitch" title="最近任务">▣</button>
+            <button class="tb" data-nav="volumeUp" title="音量加">🔊</button>
+            <button class="tb" data-nav="volumeDown" title="音量减">🔉</button>
+            <button class="tb" data-nav="power" title="电源键">⏻</button>
+            <span class="tb-sep"></span>
+            <button class="tb em" data-swipe="left" title="左滑（热键 1）">⬅</button>
+            <button class="tb em" data-swipe="right" title="右滑（热键 2）">➡</button>
+            <button class="tb em" data-swipe="up" title="上滑（热键 3）">⬆</button>
+            <button class="tb em" data-swipe="down" title="下滑（热键 4）">⬇</button>
+            <span class="tb-sep"></span>
+            <button class="tb opt" id="btnStretch" title="拉伸铺满：忽略手机宽高比铺满窗口"><span>⛶</span><span class="tb-label">铺满</span></button>
+            <button class="tb opt" id="btnMask" title="遮罩：夜间/护眼/自定义色调"><span>🌓</span><span class="tb-label">遮罩</span></button>
+            <button class="tb opt" id="btnScreenPower" title="息屏投屏：把手机亮度压到最低"><span>🌙</span><span class="tb-label">息屏投屏</span></button>
+          </div>
+
+          <div class="mask-pop" id="maskPop">
+            <div class="mask-grid" id="maskModes">
+              <button data-mode="off" aria-pressed="true">关闭</button>
+              <button data-mode="night" aria-pressed="false">黑夜模式</button>
+              <button data-mode="eye" aria-pressed="false">护眼模式</button>
+              <button data-mode="custom" aria-pressed="false">自定义</button>
+            </div>
+            <div class="mask-row" id="customRow" hidden><span>色调</span><input type="color" id="maskColor" value="#ff9b3f"></div>
+            <div class="mask-row" id="scopeRow" hidden>
+              <span>作用范围</span>
+              <div class="mini-btns" id="scopeBtns">
+                <button data-scope="picture" aria-pressed="true">仅画面</button>
+                <button data-scope="window" aria-pressed="false">整个窗口</button>
+              </div>
+            </div>
+            <label class="mask-row stack" id="opacityRow" hidden>
+              <span>色调深浅 <b id="opacityVal">50%</b></span>
+              <input type="range" id="maskOpacity" min="0" max="90" value="50">
+            </label>
+            <label class="mask-row stack">
+              <span>压暗 <b id="dimVal">0%</b></span>
+              <input type="range" id="dimRange" min="0" max="80" value="0">
+            </label>
+            <p class="mask-note">遮罩只影响电脑上的显示，手机画面不受影响；点击、滑动照常可用。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="hero-note" style="margin-top:14px">
+      提示：先点「设置」图标进到列表页，再用滚轮或按住拖动试试滚动；数字键 1/2/3/4 是四向滑动热键；左下角 <b>?</b> 有完整操作说明。
+    </p>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <div class="kicker">Architecture</div>
+        <h2>它是怎么工作的</h2>
+        <p class="sub">整条链路里没有 ffmpeg，没有 minicap 依赖，也没有往手机里推任何二进制：采集用系统自带的 <code>screenrecord</code>，解码用 Chromium 内置的 WebCodecs 硬解，控制用 <code>adb shell input</code>。</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <svg class="flow" viewBox="0 0 1040 440" role="img" aria-label="Connect Mobile 架构图：手机 screenrecord 采集 H.264，经主进程转封装后由渲染进程 WebCodecs 解码上屏；点击/键盘经主进程转成 adb shell input 回到手机">
+        <defs>
+          <marker id="aSky" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto">
+            <path d="M0,0 L9,4.5 L0,9 Z" fill="#38bdf8"/>
+          </marker>
+          <marker id="aEm" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto">
+            <path d="M0,0 L9,4.5 L0,9 Z" fill="#34d399"/>
+          </marker>
+        </defs>
+
+        <!-- 手机 -->
+        <rect x="24" y="150" width="190" height="152" rx="14" fill="#0f1620" stroke="rgba(255,255,255,.16)"/>
+        <text x="119" y="180" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600">Android 手机</text>
+        <text x="119" y="207" text-anchor="middle" fill="#8fd6ff" font-size="12" font-family="ui-monospace,Consolas,monospace">screenrecord</text>
+        <text x="119" y="228" text-anchor="middle" fill="#8a97a6" font-size="12">H.264 裸流</text>
+        <text x="119" y="252" text-anchor="middle" fill="#5f6b7a" font-size="11">系统自带 · 零部署</text>
+        <text x="119" y="272" text-anchor="middle" fill="#5f6b7a" font-size="11">Android 9- 回退 minicap</text>
+
+        <!-- 数据流箭头 -->
+        <path d="M214,196 L318,196" stroke="#38bdf8" stroke-width="1.6" fill="none" marker-end="url(#aSky)"/>
+        <text x="266" y="184" text-anchor="middle" fill="#38bdf8" font-size="10.5" font-family="ui-monospace,Consolas,monospace">adb exec-out</text>
+
+        <!-- 主进程 -->
+        <rect x="318" y="34" width="342" height="300" rx="14" fill="#0f1620" stroke="rgba(255,255,255,.16)"/>
+        <text x="338" y="62" fill="#e6edf3" font-size="14" font-weight="600">Electron 主进程</text>
+        <text x="338" y="80" fill="#5f6b7a" font-size="11">Node · 子进程 · IPC</text>
+
+        <rect x="338" y="96" width="302" height="44" rx="8" fill="#131c27" stroke="rgba(56,189,248,.28)"/>
+        <text x="352" y="114" fill="#cdd8e3" font-size="11.5" font-family="ui-monospace,Consolas,monospace">Annex-B 切 NAL</text>
+        <text x="352" y="131" fill="#7f8d9b" font-size="10.5">收集 SPS/PPS 拼成 avcC</text>
+
+        <rect x="338" y="150" width="302" height="44" rx="8" fill="#131c27" stroke="rgba(56,189,248,.28)"/>
+        <text x="352" y="168" fill="#cdd8e3" font-size="11.5" font-family="ui-monospace,Consolas,monospace">VCL → AVCC</text>
+        <text x="352" y="185" fill="#7f8d9b" font-size="10.5">每帧加 4 字节大端长度前缀</text>
+
+        <rect x="338" y="204" width="302" height="44" rx="8" fill="#131c27" stroke="rgba(56,189,248,.28)"/>
+        <text x="352" y="222" fill="#cdd8e3" font-size="11.5" font-family="ui-monospace,Consolas,monospace">IPC → VideoPacket</text>
+        <text x="352" y="239" fill="#7f8d9b" font-size="10.5">结构化克隆，不落盘</text>
+
+        <rect x="338" y="266" width="302" height="28" rx="8" fill="rgba(52,211,153,.08)" stroke="rgba(52,211,153,.3)"/>
+        <text x="352" y="285" fill="#9fe8d4" font-size="11">坐标换算：画面尺寸 × 缩放比 × 旋转角</text>
+
+        <!-- 到渲染进程 -->
+        <path d="M660,196 L708,196" stroke="#38bdf8" stroke-width="1.6" fill="none" marker-end="url(#aSky)"/>
+
+        <!-- 渲染进程 -->
+        <rect x="708" y="34" width="308" height="300" rx="14" fill="#0f1620" stroke="rgba(255,255,255,.16)"/>
+        <text x="728" y="62" fill="#e6edf3" font-size="14" font-weight="600">渲染进程</text>
+        <text x="728" y="80" fill="#5f6b7a" font-size="11">React · canvas</text>
+
+        <rect x="728" y="96" width="268" height="44" rx="8" fill="#131c27" stroke="rgba(56,189,248,.28)"/>
+        <text x="742" y="114" fill="#cdd8e3" font-size="11.5" font-family="ui-monospace,Consolas,monospace">WebCodecs VideoDecoder</text>
+        <text x="742" y="131" fill="#7f8d9b" font-size="10.5">Chromium 内置硬解，无 ffmpeg</text>
+
+        <rect x="728" y="150" width="268" height="44" rx="8" fill="#131c27" stroke="rgba(56,189,248,.28)"/>
+        <text x="742" y="168" fill="#cdd8e3" font-size="11.5" font-family="ui-monospace,Consolas,monospace">VideoFrame</text>
+        <text x="742" y="185" fill="#7f8d9b" font-size="10.5">每帧回调驱动重绘，不轮询</text>
+
+        <rect x="728" y="204" width="268" height="44" rx="8" fill="#131c27" stroke="rgba(56,189,248,.28)"/>
+        <text x="742" y="222" fill="#cdd8e3" font-size="11.5" font-family="ui-monospace,Consolas,monospace">canvas.drawImage</text>
+        <text x="742" y="239" fill="#7f8d9b" font-size="10.5">100+ fps 的落点</text>
+
+        <!-- 回程 -->
+        <path d="M872,334 L872,398 L119,398 L119,306" stroke="#34d399" stroke-width="1.6" fill="none" marker-end="url(#aEm)"/>
+        <text x="500" y="390" text-anchor="middle" fill="#9fe8d4" font-size="11">
+          鼠标点击 / 拖动 / 滚轮 / 键盘 → 坐标换算 → adb shell input tap · swipe · text
+        </text>
+        <text x="500" y="424" text-anchor="middle" fill="#5f6b7a" font-size="10.5">控制回路往返约 10–40 ms（USB），滚轮做了增量累积与 250ms 冷却，避免 adb 进程堆积</text>
+      </svg>
+    </div>
+
+    <div class="notes">
+      <div class="note"><b>为什么不用 minicap</b>它依赖的 <code>SurfaceComposerClient::getBuiltInDisplay</code> 在 Android 10 起被系统删除，任何版本的 <code>minicap.so</code> 都加载不起来。所以 Android 10+ 走 screenrecord，旧系统才回退 minicap。</div>
+      <div class="note"><b>为什么必须转 AVCC</b>WebCodecs 给了 <code>description</code>(avcC) 之后，每帧必须带长度前缀；喂起始码格式会直接报 "Unable to determine size of bitstream buffer"。</div>
+      <div class="note"><b>为什么滚轮要节流</b>每次 <code>adb shell input</code> 都是新起一个进程，Windows 上开销 50–150ms。滚轮高频触发必须累积增量 + 冷却，否则进程越滚越堆。</div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <div class="kicker">Features</div>
+        <h2>能干什么</h2>
+      </div>
+    </div>
+    <div class="fgrid">
+      <div class="feat"><div class="fi">🖥</div><h4>实时投屏</h4><p>H.264 画面，USB 下真机实测 100+ fps。静止画面不产帧属于 H.264 的正常行为。</p></div>
+      <div class="feat"><div class="fi">📶</div><h4>免线连接</h4><p>同一 WiFi 下连一次就不用插线。Android 11+ 支持配对码，老系统支持「USB 转无线」一键切换。</p></div>
+      <div class="feat"><div class="fi">👆</div><h4>像素级点击</h4><p>点哪打哪。坐标按画面尺寸与设备分辨率缩放换算，不会偏到左上角 1/4 区域。</p></div>
+      <div class="feat"><div class="fi">🖱</div><h4>滚轮当手指</h4><p>滚轮自动合成为上滑/下滑，翻列表不用按住拖。左右滚轮 = 翻页。</p></div>
+      <div class="feat"><div class="fi">⌨️</div><h4>键盘直输</h4><p>电脑键盘直接打字到手机（ASCII）。打字捕获时手势热键自动让路，数字照常输入。</p></div>
+      <div class="feat"><div class="fi">1️⃣</div><h4>四向手势热键</h4><p>小键盘 1/2/3/4（顶排数字也行）= 左/右/上/下滑，和屏幕方向一致。</p></div>
+      <div class="feat"><div class="fi">🔙</div><h4>导航键条</h4><p>返回 / 桌面 / 最近任务 / 音量 ± / 电源，全部在画面下方一排。</p></div>
+      <div class="feat"><div class="fi">🌙</div><h4>息屏投屏</h4><p>把手机亮度压到最低并延长锁屏，夜里不刺眼，投屏不中断；退出自动还原。</p></div>
+      <div class="feat"><div class="fi">🌓</div><h4>画面遮罩</h4><p>黑夜 / 护眼 / 自定义色调，可只染画面也可染满整个窗口，只影响电脑显示。</p></div>
+      <div class="feat"><div class="fi">🪟</div><h4>可收起的侧栏</h4><p>侧栏边缘可拖拽调宽；收起时能把窗口缩成贴合画面的小窗（scrcpy 风格）。</p></div>
+      <div class="feat"><div class="fi">🔍</div><h4>分辨率可调</h4><p>360 / 540 / 720 / 1080 / 原始。720 是清晰度与流畅度的平衡点。</p></div>
+      <div class="feat"><div class="fi">🧪</div><h4>有测试</h4><p>22 个单元测试（H.264 解析、minicap 协议、坐标换算、文本转义）+ 5 个真机 e2e 脚本。</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="limits">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <div class="kicker">Scope &amp; limits</div>
+        <h2>边界在哪里，为什么不做网页版</h2>
+        <p class="sub">这一节是刻意写清楚的：这个作品的形态是桌面应用，不是网页，也不是小程序。原因不是懒得改，而是它的三根支柱浏览器都拿不到。</p>
+      </div>
+    </div>
+
+    <div class="two">
+      <div class="box warn">
+        <h3><span class="dot"></span>它做不到的事</h3>
+        <ul>
+          <li>只支持 <b>Android</b>。iOS 要 libimobiledevice + WebDriverAgent，是另一套架构。</li>
+          <li><b>中文输入不支持</b>：<code>adb input text</code> 只收 ASCII，中文请用手机自己输入法。</li>
+          <li>画面有变化才产帧，<b>静止时帧率统计会掉到 0</b>。</li>
+          <li>息屏投屏是「最低亮度」方案，背光仍开着，<b>省电有限</b>，价值是夜里不刺眼。</li>
+          <li>无线模式延迟与画质受 WiFi 带宽影响，建议 720p 以下。</li>
+          <li>只在 <b>Windows 10 / 11</b> 上验证过并打包（NSIS 安装包）。</li>
+        </ul>
+      </div>
+
+      <div class="box">
+        <h3><span class="dot" style="background:#38bdf8;box-shadow:0 0 0 3px rgba(56,189,248,.16)"></span>为什么交不出网页版 / 小程序版</h3>
+        <ul>
+          <li><b>要起子进程</b>：全流程靠 <code>resources/tools/adb.exe</code> 干活，浏览器没有 <code>child_process</code>，也没有本地文件系统。</li>
+          <li><b>要摸 USB</b>：投屏与点击都建立在 USB 调试通道上，小程序连 TCP 直连都受限。</li>
+          <li><b>要安全上下文</b>：WebCodecs 的 <code>VideoDecoder</code> 只在安全上下文可用，<code>data:</code> 页面里直接是 undefined。</li>
+          <li>理论上存在一条路：Chrome 的 <b>WebUSB</b> + 用 JS 重写一遍 ADB 协议（ya-webadb 那种），但那等于把 <code>adb / devices / screenrecord / input / wireless</code> 五个模块全部重写，且只有 Chrome、必须 HTTPS、小程序依然无解。</li>
+          <li>所以本作品以 <b>Windows 桌面应用</b>形态交付，本页面是它的<b>交互演示与说明</b>，不是产品本体。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="download">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <div class="kicker">Get it</div>
+        <h2>下载与上手</h2>
+      </div>
+    </div>
+
+    <div class="dl">
+      <div class="dl-card">
+        <h3>Connect Mobile 0.1.0 · Windows</h3>
+        <p>NSIS 安装包，装完即用。内置 adb（platform-tools）与各 ABI 的 minicap 产物，不需要另外配环境。</p>
+        <div class="req">
+          <span>Windows 10 / 11 x64</span>
+          <span>约 110 MB</span>
+          <span>无需 Node</span>
+          <span>手机端零安装</span>
+        </div>
+        <button class="btn btn-primary" id="btnDownload">获取安装包</button>
+        <p class="hero-note" id="dlHint" style="margin-top:12px">未挂公网直链 · 点按钮可查看构建命令</p>
+      </div>
+
+      <div class="box">
+        <h3><span class="dot"></span>手机端准备（4 步）</h3>
+        <ol class="steps">
+          <li>设置 → 关于手机 → 连点「版本号」7 次，开启开发者选项</li>
+          <li>开发者选项 → 打开「USB 调试」</li>
+          <li>插上 USB 线，手机上点「允许 USB 调试」→ 勾选「一直允许」</li>
+          <li>部分国产 ROM 还要额外打开「USB 调试（安全设置）」，否则点击无效</li>
+        </ol>
+        <p class="side-tip" style="margin-top:6px">连好后在应用里选中设备 → 选投屏宽度 → 点「开始投屏」。想免线就点右上角「无线连接」。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <b>Connect Mobile</b> · 用 Electron + React + TypeScript 写的 Android 投屏与远程控制工具，约 4k 行代码，零多余运行时依赖。<br>
+    本页面的界面演示为源码级复刻，画面、帧率与设备信息均为模拟数据，不会连接任何真实设备；点击/滑动只作用于演示里的虚拟手机。<br>
+    WorkBuddy 1024 造物节参赛作品 · 2026
+  </div>
+</footer>
+
+<div class="modal" id="modal">
+  <div class="modal-card">
+    <h3 id="modalTitle">标题</h3>
+    <div id="modalBody"></div>
+    <button class="btn btn-ghost" id="modalClose">知道了</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ===== 配置：把安装包地址填在这里（GitHub Release / 网盘 / 对象存储都行） ===== */
+  const DOWNLOAD_URL = "";
+
+  var $ = function(id){ return document.getElementById(id); };
+  var clamp = function(v,a,b){ return Math.min(b, Math.max(a,v)); };
+
+  /* ---------------- 状态 ---------------- */
+  var DEVICES = [
+    { id:'2B0D1FDH200XYZ', model:'Pixel 7',      android:'14', state:'device',       wireless:false, w:1080, h:2400 },
+    { id:'192.168.1.42:5555', model:'Xiaomi 13', android:'13', state:'device',       wireless:true,  w:1080, h:2400 },
+    { id:'R58M90ABCDE',    model:'Redmi Note 12',android:'12', state:'unauthorized', wireless:false, w:1080, h:2400 }
+  ];
+
+  var S = {
+    selected: '2B0D1FDH200XYZ',
+    streaming: false,
+    width: 720,
+    preferFps: false,
+    screen: 'home',        // home | settings
+    recents: false,
+    shade: false,
+    locked: false,
+    screenPower: false,
+    scroll: 0,
+    query: '',
+    typedFlash: 0,
+    volume: 8,
+    volShown: false,
+    mask: { mode:'off', color:'#ff9b3f', opacity:0.5, dim:0, scope:'picture' },
+    stretch: false,
+    sidebarCollapsed: false,
+    booted: false
+  };
+
+  var APPS = [
+    { id:'phone',  name:'电话',   g:'linear-gradient(145deg,#34d399,#059669)', i:'📞' },
+    { id:'msg',    name:'短信',   g:'linear-gradient(145deg,#60a5fa,#2563eb)', i:'💬' },
+    { id:'camera', name:'相机',   g:'linear-gradient(145deg,#94a3b8,#475569)', i:'📷' },
+    { id:'gallery',name:'相册',   g:'linear-gradient(145deg,#fbbf24,#f97316)', i:'🖼' },
+    { id:'settings',name:'设置',  g:'linear-gradient(145deg,#cbd5e1,#64748b)', i:'⚙️' },
+    { id:'clock',  name:'时钟',   g:'linear-gradient(145deg,#1f2937,#0f172a)', i:'⏰' },
+    { id:'music',  name:'音乐',   g:'linear-gradient(145deg,#fb7185,#e11d48)', i:'🎵' },
+    { id:'calc',   name:'计算器', g:'linear-gradient(145deg,#a78bfa,#7c3aed)', i:'🔢' },
+    { id:'files',  name:'文件',   g:'linear-gradient(145deg,#38bdf8,#0284c7)', i:'📁' },
+    { id:'map',    name:'地图',   g:'linear-gradient(145deg,#4ade80,#16a34a)', i:'🗺' },
+    { id:'browser',name:'浏览器', g:'linear-gradient(145deg,#67e8f9,#0891b2)', i:'🌐' },
+    { id:'store',  name:'应用商店',g:'linear-gradient(145deg,#fda4af,#f43f5e)', i:'🛍' }
+  ];
+
+  var SETTINGS_ITEMS = [
+    { t:'网络与互联网', s:'WLAN · 移动网络 · 热点', c:'#60a5fa', i:'📶' },
+    { t:'已连接的设备', s:'蓝牙 · 投屏 · USB', c:'#38bdf8', i:'🔗' },
+    { t:'应用', s:'最近打开 6 个应用', c:'#a78bfa', i:'▦' },
+    { t:'通知', s:'3 个应用允许通知', c:'#fb7185', i:'🔔' },
+    { t:'电池', s:'剩余 68% · 约 9 小时', c:'#34d399', i:'🔋' },
+    { t:'存储', s:'已用 78 GB / 256 GB', c:'#fbbf24', i:'💾' },
+    { t:'声音与振动', s:'媒体音量 8 / 15', c:'#f97316', i:'🔊' },
+    { t:'显示', s:'深色主题 · 自适应亮度', c:'#22d3ee', i:'🖥' },
+    { t:'安全', s:'屏幕锁定 · 指纹', c:'#818cf8', i:'🛡' },
+    { t:'位置信息', s:'已开启', c:'#4ade80', i:'📍' },
+    { t:'关于手机', s:'Pixel 7 · Android 14', c:'#94a3b8', i:'ℹ️' }
+  ];
+
+  /* ---------------- 侧栏 ---------------- */
+  function renderDevices(){
+    var box = $('devList');
+    box.innerHTML = '';
+    DEVICES.forEach(function(d){
+      var b = document.createElement('button');
+      b.className = 'dev';
+      b.setAttribute('aria-selected', d.id === S.selected ? 'true' : 'false');
+      b.innerHTML = '<div class="dev-name">' + (d.wireless ? '📶 ' : '') + d.model + '</div>' +
+        '<div class="dev-meta">' + d.id + ' · ' + stateText(d.state) +
+        (d.android ? ' · Android ' + d.android : '') + '</div>';
+      b.onclick = function(){
+        S.selected = d.id;
+        renderDevices();
+        setControlsEnabled(S.streaming);
+        if (S.streaming) { toast('已切换设备 · ' + d.model); }
+        renderPhone();
+      };
+      box.appendChild(b);
+    });
+    $('devCount').textContent = '设备（' + DEVICES.length + '）';
+  }
+  function stateText(s){
+    return s === 'device' ? '已连接' : s === 'unauthorized' ? '未授权，请在手机上点允许' :
+           s === 'offline' ? '离线' : s === 'bootloader' ? 'bootloader' : '未知';
+  }
+
+  /* ---------------- 手机画面 ---------------- */
+  function statusBar(){
+    return '<div class="status"><span>16:09</span><span class="status-r">' +
+      '<span>5G</span>' +
+      '<span style="display:flex;align-items:flex-end;gap:1.5px;height:9px">' +
+        '<i class="bar" style="height:4px"></i><i class="bar" style="height:6px"></i>' +
+        '<i class="bar" style="height:8px"></i><i class="bar" style="height:9px"></i></span>' +
+      '<span class="batt"></span></span></div>';
+  }
+
+  function homeScreen(){
+    var icons = APPS.map(function(a){
+      return '<div class="appicon" data-act="app:' + a.id + '" data-name="' + a.name + '">' +
+        '<div class="sq" style="background:' + a.g + '">' + a.i + '</div><span>' + a.name + '</span></div>';
+    }).join('');
+    var dock = ['phone','msg','browser','camera'].map(function(id){
+      var a = APPS.filter(function(x){ return x.id === id; })[0];
+      return '<div class="appicon" data-act="app:' + a.id + '" data-name="' + a.name + '">' +
+        '<div class="sq" style="background:' + a.g + '">' + a.i + '</div></div>';
+    }).join('');
+    return '<div class="android">' +
+      statusBar() +
+      '<div class="home-head"><div class="clock">16:09</div><div class="date">周一 · 10月26日 · 晴 18°</div></div>' +
+      '<div class="grid">' + icons + '</div>' +
+      '<div class="dock">' + dock + '</div>' +
+      '<div class="gesture"><i></i></div>' +
+    '</div>';
+  }
+
+  function settingsScreen(){
+    var q = S.query.toLowerCase();
+    var items = SETTINGS_ITEMS.filter(function(it){
+      return !q || (it.t + it.s).toLowerCase().indexOf(q) >= 0;
+    });
+    var list = items.length ? items.map(function(it){
+      return '<div class="item" data-act="row" data-name="' + it.t + '">' +
+        '<div class="ic" style="background:' + it.c + '22;color:' + it.c + '">' + it.i + '</div>' +
+        '<div class="tx">' + it.t + '<small>' + it.s + '</small></div>' +
+        '<div class="go">›</div></div>';
+    }).join('') : '<div class="empty">没有匹配的设置项</div>';
+
+    return '<div class="appscreen">' +
+      '<div class="appbar"><button class="bk" data-act="back">‹</button><h3>设置</h3></div>' +
+      '<div class="search"><span>🔍</span><span class="q">' + escapeHtml(S.query || '搜索设置') + '</span>' +
+        (document.activeElement === $('kbInput') ? '<span class="caret"></span>' : '') + '</div>' +
+      '<div class="list"><div class="list-inner" id="listInner">' + list + '</div></div>' +
+    '</div>';
+  }
+
+  function recentsScreen(){
+    return '<div class="screen">' + (S.screen === 'settings' ? settingsScreen() : homeScreen()) + '</div>' +
+      '<div class="recents">' +
+        '<div class="card" data-act="openRecents:settings"><div class="ch">⚙️ 设置</div><div class="cb light"></div></div>' +
+        '<div class="card" data-act="openRecents:home"><div class="ch">🏠 桌面</div><div class="cb"></div></div>' +
+      '</div>';
+  }
+
+  function lockScreen(){
+    return '<div class="lock" data-act="unlock">' +
+      '<div class="t">16:09</div><div class="d">周一 · 10月26日</div>' +
+      '<div class="lk">🔒</div><div class="up">上滑解锁（点一下也行）</div></div>';
+  }
+
+  function shade(){
+    return '<div class="shade' + (S.shade ? ' on' : '') + '">' +
+      statusBar() +
+      '<div class="qk">' +
+        '<i class="on">📶</i><i class="on">🔵</i><i>🔔</i><i>✈️</i>' +
+        '<i>🔦</i><i>🌙</i><i class="on">🔋</i><i>⚙️</i>' +
+      '</div>' +
+      '<div class="nt"><b>Connect Mobile</b>USB 调试已连接 · 正在投屏</div>' +
+      '<div class="nt"><b>系统更新</b>Android 安全更新已就绪</div>' +
+    '</div>';
+  }
+
+  function renderPhone(){
+    var sc = $('screen');
+    if (!S.booted) { sc.innerHTML = ''; return; }
+
+    if (S.locked) {
+      sc.innerHTML = lockScreen();
+    } else if (S.recents) {
+      sc.innerHTML = recentsScreen();
+    } else if (S.screen === 'settings') {
+      sc.innerHTML = settingsScreen();
+    } else {
+      sc.innerHTML = homeScreen();
+    }
+    if (S.shade) sc.innerHTML += shade();
+
+    // 音量条
+    if (S.volShown) {
+      sc.innerHTML += '<div class="vol"><span>🔊</span><div class="volbar"><i style="height:' +
+        (S.volume / 15 * 100) + '%"></i></div><span>' + S.volume + '</span></div>';
+    }
+    if (S.typedFlash) {
+      sc.innerHTML += '<div style="position:absolute;left:8%;right:8%;bottom:26px;background:rgba(0,0,0,.72);' +
+        'border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:9px 12px;color:#fff;font-size:11px;' +
+        'z-index:12">已发送到手机：<b style="color:#7dd3fc">' + escapeHtml(S.typedFlash) + '</b></div>';
+    }
+
+    applyMask();
+    applyScroll();
+    var d = DEVICES.filter(function(x){ return x.id === S.selected; })[0];
+    if (!S.stretch) $('phoneWrap').style.aspectRatio = d.w + '/' + d.h;
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"]/g, function(c){
+      return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' })[c];
+    });
+  }
+
+  function applyScroll(){
+    var inner = $('listInner');
+    if (!inner) return;
+    var maxScroll = Math.max(0, inner.scrollHeight - inner.parentElement.clientHeight);
+    S.scroll = clamp(S.scroll, 0, maxScroll);
+    inner.style.transform = 'translateY(' + (-S.scroll) + 'px)';
+  }
+
+  function maxScroll(){
+    var inner = $('listInner');
+    if (!inner) return 0;
+    return Math.max(0, inner.scrollHeight - inner.parentElement.clientHeight);
+  }
+
+  /* ---------------- 遮罩 ---------------- */
+  function applyMask(){
+    var night = $('maskNight'), dim = $('maskDim');
+    var m = S.mask;
+    if (m.mode === 'night') {
+      night.hidden = false;
+      night.style.background = '#ff9b3f';
+      night.style.mixBlendMode = 'multiply';
+      night.style.opacity = m.opacity;
+    } else if (m.mode === 'eye') {
+      night.hidden = false;
+      night.style.background = '#b7e6b0';
+      night.style.mixBlendMode = 'normal';
+      night.style.opacity = m.opacity;
+    } else if (m.mode === 'custom') {
+      night.hidden = false;
+      night.style.background = m.color;
+      night.style.mixBlendMode = 'normal';
+      night.style.opacity = m.opacity;
+    } else {
+      night.hidden = true;
+    }
+    if (m.dim > 0) { dim.hidden = false; dim.style.background = '#000'; dim.style.opacity = m.dim; }
+    else { dim.hidden = true; }
+
+    // 整个窗口模式：把应用底色也染色，跟真实实现一致
+    var app = $('app');
+    if (m.mode !== 'off' && m.scope === 'window') {
+      app.style.background = m.mode === 'night' ? '#3d2b18' : (m.mode === 'eye' ? '#243b28' : m.color);
+    } else {
+      app.style.background = '';
+    }
+  }
+
+  /* ---------------- 帧率/延迟 ---------------- */
+  var FPS_BASE = { '0':54, '360':148, '540':124, '720':104, '1080':58 };
+  var timers = [];
+
+  function startStats(){
+    stopStats();
+    timers.push(setInterval(function(){
+      var base = FPS_BASE[String(S.width)] || 104;
+      if (S.preferFps) base = Math.round(base * 1.16);
+      var fps = Math.max(1, Math.round(base + (Math.random() * 12 - 6)));
+      var ms = Math.round(28 + Math.random() * 14);
+      var d = DEVICES.filter(function(x){ return x.id === S.selected; })[0];
+      var outH = S.width ? Math.round(S.width * d.h / d.w / 2) * 2 : d.h;
+      $('hudRes').textContent = (S.width ? S.width : d.w) + '×' + outH;
+      $('hudFps').textContent = fps + ' fps';
+      $('hudMs').textContent = ms + ' ms';
+    }, 620));
+  }
+  function stopStats(){ timers.forEach(clearInterval); timers = []; }
+
+  /* ---------------- 投屏启停 ---------------- */
+  function startStream(){
+    if (S.streaming) return;
+    $('placeholder').hidden = false;
+    $('phoneWrap').classList.remove('live');
+    $('btnStart').hidden = true;
+    $('btnStop').hidden = false;
+    setControlsEnabled(false);
+    setTimeout(function(){
+      S.streaming = true;
+      S.booted = true;
+      S.scroll = 0;
+      S.screen = 'home';
+      S.recents = false;
+      S.shade = false;
+      S.locked = false;
+      $('placeholder').hidden = true;
+      $('phoneWrap').classList.add('live');
+      renderPhone();
+      setControlsEnabled(true);
+      startStats();
+      toast('已连接 ' + curDevice().model + ' · 开始投屏');
+    }, 900);
+  }
+
+  function stopStream(){
+    S.streaming = false;
+    S.booted = false;
+    S.recents = false; S.shade = false; S.locked = false; S.screenPower = false;
+    S.volShown = false;
+    stopStats();
+    $('phoneWrap').classList.remove('live');
+    $('placeholder').hidden = true;
+    $('screen').innerHTML = '';
+    $('gone').classList.remove('on');
+    $('btnStart').hidden = false;
+    $('btnStop').hidden = true;
+    $('hudRes').textContent = '—';
+    $('hudFps').textContent = '— fps';
+    $('hudMs').textContent = '— ms';
+    $('btnScreenPower').classList.remove('on-amber');
+    $('btnScreenPower').querySelector('.tb-label').textContent = '息屏投屏';
+    setControlsEnabled(false);
+    toast('投屏已停止');
+  }
+
+  function curDevice(){
+    return DEVICES.filter(function(x){ return x.id === S.selected; })[0];
+  }
+
+  function setControlsEnabled(on){
+    var ok = on && curDevice().state === 'device';
+    Array.prototype.forEach.call(document.querySelectorAll('.toolbar .tb'), function(b){
+      if (b.id === 'btnStretch' || b.id === 'btnMask') return;
+      b.disabled = !ok;
+    });
+    $('selWidth').disabled = on;
+    $('swFps').disabled = on;
+  }
+
+  /* ---------------- 交互 ---------------- */
+  var toastTimer = null;
+  function toast(msg){
+    var t = $('toast');
+    t.textContent = msg;
+    t.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove('on'); }, 1700);
+  }
+
+  function ripple(x, y){
+    var r = document.createElement('div');
+    r.className = 'ripple';
+    r.style.left = x + 'px';
+    r.style.top = y + 'px';
+    $('screen').appendChild(r);
+    setTimeout(function(){ r.remove(); }, 520);
+  }
+
+  function devPoint(clientX, clientY){
+    var rect = $('phone').getBoundingClientRect();
+    var d = curDevice();
+    return {
+      x: Math.round((clientX - rect.left) / rect.width * d.w),
+      y: Math.round((clientY - rect.top) / rect.height * d.h),
+      px: clientX - rect.left,
+      py: clientY - rect.top
+    };
+  }
+
+  function handleAct(el, p){
+    if (!el) return false;
+    var act = el.getAttribute('data-act');
+    if (!act) return false;
+
+    if (act.indexOf('app:') === 0) {
+      var id = act.slice(4);
+      if (id === 'settings') {
+        S.screen = 'settings'; S.scroll = 0; S.query = ''; renderPhone();
+        toast('tap ' + p.x + ' · ' + p.y + '  →  打开设置');
+      } else {
+        toast('tap ' + p.x + ' · ' + p.y + '  →  ' + (el.getAttribute('data-name') || id));
+      }
+      return true;
+    }
+    if (act === 'back') { S.screen = 'home'; S.scroll = 0; S.query = ''; renderPhone(); toast('keyevent BACK'); return true; }
+    if (act === 'unlock') { S.locked = false; renderPhone(); toast('上滑解锁'); return true; }
+    if (act.indexOf('openRecents:') === 0) {
+      S.recents = false;
+      S.screen = act.split(':')[1];
+      renderPhone(); toast('切回最近任务');
+      return true;
+    }
+    if (act === 'row') { toast('tap ' + p.x + ' · ' + p.y + '  →  ' + (el.getAttribute('data-name') || '')); return true; }
+    return false;
+  }
+
+  var drag = null;
+  function bindPhone(){
+    var phone = $('phone');
+
+    phone.addEventListener('pointerdown', function(e){
+      if (!S.streaming) return;
+      if (curDevice().state !== 'device') { toast('设备未授权，先在手机上点「允许」'); return; }
+      drag = { x:e.clientX, y:e.clientY, startScroll:S.scroll, moved:false, target:e.target };
+      phone.setPointerCapture(e.pointerId);
+    });
+
+    phone.addEventListener('pointermove', function(e){
+      if (!drag) return;
+      var dy = e.clientY - drag.y;
+      var dx = e.clientX - drag.x;
+      if (!drag.moved && Math.hypot(dx, dy) > 6) drag.moved = true;
+      if (drag.moved) {
+        if (S.screen === 'settings' && !S.recents) {
+          S.scroll = clamp(drag.startScroll - dy, 0, maxScroll());
+          applyScroll();
+        }
+      }
+    });
+
+    phone.addEventListener('pointerup', function(e){
+      if (!drag) return;
+      var d = drag; drag = null;
+      var p = devPoint(e.clientX, e.clientY);
+      if (!d.moved) {
+        ripple(p.px, p.py);
+        // 指针捕获会把事件目标重定向到 phone 本身，所以按坐标重新命中最上层元素
+        var hit = document.elementFromPoint(e.clientX, e.clientY);
+        var acted = handleAct(hit && hit.closest('[data-act]'), p);
+        if (!acted) toast('tap ' + p.x + ' · ' + p.y);
+        return;
+      }
+      // 拖动：判断方向
+      var dy = e.clientY - d.y, dx = e.clientX - d.x;
+      if (Math.abs(dy) > Math.abs(dx)) {
+        if (S.screen === 'home' && dy > 40) { S.shade = true; renderPhone(); toast('swipe down → 拉下通知栏'); }
+        else if (S.screen === 'home' && dy < -40) { S.shade = false; renderPhone(); toast('swipe up → 收起通知栏'); }
+        else toast('swipe ' + Math.round(p.x) + ',' + Math.round(p.y));
+      } else {
+        toast((dx > 0 ? 'swipe right' : 'swipe left') + ' · ' + Math.abs(Math.round(dx)) + 'px');
+      }
+    });
+
+    phone.addEventListener('pointercancel', function(){ drag = null; });
+
+    phone.addEventListener('wheel', function(e){
+      if (!S.streaming) return;
+      e.preventDefault();
+      if (S.screen === 'settings' && !S.recents) {
+        S.scroll = clamp(S.scroll + e.deltaY * 0.9, 0, maxScroll());
+        applyScroll();
+      } else {
+        S.shade = e.deltaY < 0;
+        renderPhone();
+      }
+    }, { passive:false });
+  }
+
+  /* 四向滑动（按钮与热键共用） */
+  function swipe(dir){
+    if (!S.streaming) return;
+    if (curDevice().state !== 'device') { toast('设备未授权'); return; }
+    var step = 260;
+    if (S.screen === 'settings' && !S.recents) {
+      if (dir === 'up') { S.scroll = clamp(S.scroll + step, 0, maxScroll()); }
+      else if (dir === 'down') { S.scroll = clamp(S.scroll - step, 0, maxScroll()); }
+      applyScroll();
+      toast('swipe ' + dir + ' → 列表滚动');
+      return;
+    }
+    if (dir === 'down') { S.shade = true; renderPhone(); toast('swipe down → 通知栏'); }
+    else if (dir === 'up') { S.shade = false; renderPhone(); toast('swipe up → 收起'); }
+    else toast('swipe ' + dir);
+  }
+
+  function nav(key){
+    if (!S.streaming) return;
+    if (curDevice().state !== 'device') { toast('设备未授权'); return; }
+    if (key === 'back') {
+      if (S.recents) { S.recents = false; }
+      else if (S.screen === 'settings') { S.screen = 'home'; S.scroll = 0; S.query = ''; }
+      renderPhone(); toast('keyevent BACK');
+    } else if (key === 'home') {
+      S.screen = 'home'; S.recents = false; S.shade = false; S.scroll = 0;
+      renderPhone(); toast('keyevent HOME');
+    } else if (key === 'appSwitch') {
+      S.recents = !S.recents; renderPhone(); toast('keyevent APP_SWITCH');
+    } else if (key === 'volumeUp' || key === 'volumeDown') {
+      S.volume = clamp(S.volume + (key === 'volumeUp' ? 1 : -1), 0, 15);
+      S.volShown = true; renderPhone();
+      toast('keyevent ' + (key === 'volumeUp' ? 'VOLUME_UP' : 'VOLUME_DOWN') + ' · ' + S.volume + '/15');
+      setTimeout(function(){ S.volShown = false; renderPhone(); }, 1400);
+    } else if (key === 'power') {
+      S.locked = !S.locked; renderPhone(); toast('keyevent POWER');
+    }
+  }
+
+  /* ---------------- 绑定 UI ---------------- */
+  function initUI(){
+    $('btnStart').onclick = startStream;
+    $('btnStop').onclick = stopStream;
+
+    $('btnSidebar').onclick = function(){
+      S.sidebarCollapsed = !S.sidebarCollapsed;
+      $('side').hidden = S.sidebarCollapsed;
+      this.textContent = S.sidebarCollapsed ? '☰' : '⇤';
+      this.title = S.sidebarCollapsed ? '展开侧栏' : '收起侧栏';
+    };
+
+    // 侧栏拖宽
+    var rz = $('resizer'), dragging = false;
+    rz.addEventListener('mousedown', function(e){
+      e.preventDefault(); dragging = true; rz.classList.add('on');
+      var onMove = function(ev){
+        if (!dragging) return;
+        var w = clamp(ev.clientX - $('app').getBoundingClientRect().left, 200, 380);
+        $('side').style.flexBasis = w + 'px';
+      };
+      var onUp = function(){ dragging = false; rz.classList.remove('on');
+        window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+    });
+
+    $('selWidth').onchange = function(){
+      S.width = Number(this.value);
+      if (S.streaming) { startStats(); toast('投屏宽度 → ' + (S.width ? S.width + ' px' : '原始分辨率')); }
+    };
+
+    $('swFps').onclick = function(){
+      S.preferFps = !S.preferFps;
+      this.setAttribute('aria-checked', String(S.preferFps));
+      if (S.streaming) { startStats(); toast(S.preferFps ? '流畅优先：已提高码率' : '流畅优先：关闭'); }
+    };
+    $('swCompact').onclick = function(){
+      var on = this.getAttribute('aria-checked') !== 'true';
+      this.setAttribute('aria-checked', String(on));
+    };
+
+    $('helpBtn').onclick = function(){
+      var p = $('helpPanel');
+      p.hidden = !p.hidden;
+    };
+
+    Array.prototype.forEach.call(document.querySelectorAll('[data-nav]'), function(b){
+      b.onclick = function(){ nav(this.getAttribute('data-nav')); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-swipe]'), function(b){
+      b.onclick = function(){ swipe(this.getAttribute('data-swipe')); };
+    });
+
+    // 铺满
+    $('btnStretch').onclick = function(){
+      S.stretch = !S.stretch;
+      this.classList.toggle('on-sky', S.stretch);
+      $('phoneWrap').style.maxWidth = S.stretch ? '100%' : '94%';
+      $('phoneWrap').style.height = S.stretch ? '100%' : '92%';
+      $('phoneWrap').style.aspectRatio = S.stretch ? 'auto' : (curDevice().w + '/' + curDevice().h);
+      toast(S.stretch ? '拉伸铺满：开（点击位置依然按比例换算）' : '拉伸铺满：关');
+    };
+
+    // 遮罩
+    var pop = $('maskPop');
+    $('btnMask').onclick = function(e){
+      e.stopPropagation();
+      pop.classList.toggle('on');
+    };
+    document.addEventListener('click', function(e){
+      if (!pop.contains(e.target) && e.target !== $('btnMask') && !$('btnMask').contains(e.target)) pop.classList.remove('on');
+    });
+    pop.addEventListener('click', function(e){ e.stopPropagation(); });
+
+    Array.prototype.forEach.call($('maskModes').children, function(b){
+      b.onclick = function(){
+        S.mask.mode = this.getAttribute('data-mode');
+        syncMaskUI(); applyMask();
+        $('btnMask').classList.toggle('on-indigo', S.mask.mode !== 'off' || S.mask.dim > 0);
+        toast('遮罩 → ' + this.textContent);
+      };
+    });
+    Array.prototype.forEach.call($('scopeBtns').children, function(b){
+      b.onclick = function(){
+        S.mask.scope = this.getAttribute('data-scope');
+        syncMaskUI(); applyMask();
+      };
+    });
+    $('maskColor').oninput = function(){ S.mask.color = this.value; applyMask(); };
+    $('maskOpacity').oninput = function(){ S.mask.opacity = Number(this.value) / 100; $('opacityVal').textContent = this.value + '%'; applyMask(); };
+    $('dimRange').oninput = function(){
+      S.mask.dim = Number(this.value) / 100; $('dimVal').textContent = this.value + '%';
+      applyMask();
+      $('btnMask').classList.toggle('on-indigo', S.mask.mode !== 'off' || S.mask.dim > 0);
+    };
+
+    // 息屏投屏
+    $('btnScreenPower').onclick = function(){
+      if (!S.streaming) return;
+      S.screenPower = !S.screenPower;
+      $('gone').classList.toggle('on', S.screenPower);
+      this.classList.toggle('on-amber', S.screenPower);
+      this.querySelector('.tb-label').textContent = S.screenPower ? '息屏投屏：开' : '息屏投屏';
+      toast(S.screenPower ? '亮度压到最低 · 锁屏超时已延长' : '亮度与锁屏设置已还原');
+    };
+
+    // 键盘输入
+    var kb = $('kbInput');
+    kb.addEventListener('input', function(){
+      var v = this.value;
+      if (!/^[\x20-\x7E]*$/.test(v)) {
+        this.value = v.replace(/[^\x20-\x7E]/g, '');
+        toast('只支持 ASCII，中文请用手机输入法');
+        return;
+      }
+      if (!S.streaming) return;
+      if (S.screen === 'settings' && !S.recents) {
+        S.query = this.value; renderPhone();
+      } else {
+        S.typedFlash = this.value.slice(-24);
+        renderPhone();
+      }
+    });
+    kb.addEventListener('focus', function(){
+      if (S.streaming && S.screen === 'settings') renderPhone();
+    });
+    kb.addEventListener('blur', function(){ if (S.streaming) renderPhone(); });
+
+    // 热键
+    window.addEventListener('keydown', function(e){
+      if (!S.streaming) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      var tag = (e.target && e.target.tagName) || '';
+      if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+      var map = { '1':'left', '2':'right', '3':'up', '4':'down' };
+      if (map[e.key] && (e.code.indexOf('Numpad') === 0 || /^[1-4]$/.test(e.key))) {
+        e.preventDefault();
+        swipe(map[e.key]);
+      }
+    });
+
+    $('btnWireless').onclick = function(){
+      openModal('无线连接（演示）',
+        '<p>真实应用里这一步会：扫描 mDNS 无线调试服务 → 列出同网段的手机 → 填 6 位配对码完成配对 → 之后免线使用，操作方式与 USB 完全一致。</p>' +
+        '<p class="mono-sm">adb mdns services · adb pair ip:port code · adb connect ip:port</p>' +
+        '<p style="margin-top:10px">演示页面不发起任何网络请求，所以这里只展示流程。</p>');
+    };
+
+    $('btnDownload').onclick = function(){
+      if (DOWNLOAD_URL) { window.open(DOWNLOAD_URL, '_blank', 'noopener'); return; }
+      openModal('安装包还没有上传地址',
+        '<p>应用本身已经能打包（<code>pnpm package</code> → <code>electron-builder</code> → NSIS），但安装包需要放到一个公开可下载的位置。</p>' +
+        '<p>在 Windows 上执行：</p><p class="mono-sm">pnpm install &amp;&amp; pnpm fetch-tools &amp;&amp; pnpm package</p>' +
+        '<p style="margin-top:10px">产物：<code>release/Connect Mobile Setup 0.1.0.exe</code>。上传到 GitHub Release 或网盘后，把链接填进页面源码顶部的 <code>DOWNLOAD_URL</code> 即可。</p>');
+    };
+
+    $('modalClose').onclick = closeModal;
+    $('modal').onclick = function(e){ if (e.target === this) closeModal(); };
+  }
+
+  function syncMaskUI(){
+    Array.prototype.forEach.call($('maskModes').children, function(b){
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-mode') === S.mask.mode));
+    });
+    Array.prototype.forEach.call($('scopeBtns').children, function(b){
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-scope') === S.mask.scope));
+    });
+    $('customRow').hidden = S.mask.mode !== 'custom';
+    $('scopeRow').hidden = S.mask.mode === 'off';
+    $('opacityRow').hidden = S.mask.mode === 'off';
+  }
+
+  function openModal(title, html){
+    $('modalTitle').textContent = title;
+    $('modalBody').innerHTML = html;
+    $('modal').classList.add('on');
+  }
+  function closeModal(){ $('modal').classList.remove('on'); }
+
+  /* ---------------- 启动 ---------------- */
+  renderDevices();
+  initUI();
+  syncMaskUI();
+  bindPhone();
+  setControlsEnabled(false);
+  $('dlHint').textContent = DOWNLOAD_URL ? 'Windows 安装包 · 直接从上方按钮下载' : '未挂公网直链 · 点按钮可查看构建命令';
+
+  // 进入视口后自动开一次投屏，让演示一打开就是活的
+  if ('IntersectionObserver' in window) {
+    var once = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (en.isIntersecting) { once.disconnect(); setTimeout(startStream, 420); }
+      });
+    }, { threshold: 0.35 });
+    once.observe($('app'));
+  } else {
+    setTimeout(startStream, 800);
+  }
+})();
+</script>
+</body>
+</html>

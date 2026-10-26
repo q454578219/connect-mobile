@@ -1,0 +1,36 @@
+node_modules/
+out/
+release/
+*.log
+.DS_Store
+
+# 截图产物
+screenshot-*.png
+
+# 测试产生的临时目录
+scripts/.tmp/
+scripts/.tmp-*/
+
+# 内置的 adb 与 minicap 是运行时依赖，体积大，
+# 首次使用请按 README 下载到 resources/tools/，不要提交进仓库
+resources/tools/adb.exe
+resources/tools/AdbWinApi.dll
+resources/tools/AdbWinUsbApi.dll
+resources/tools/fastboot.exe
+resources/tools/etc1tool.exe
+resources/tools/hprof-conv.exe
+resources/tools/make_f2fs.exe
+resources/tools/mke2fs.exe
+resources/tools/sqlite3.exe
+resources/tools/libwinpthread-1.dll
+resources/tools/minicap/
+resources/tools/ADBKeyboard.apk
+
+# 发布/工具产生的本地标记与内部记录
+.wbapp_*.genie
+.workbuddy/
+.zcode/
+
+# 兜底：platform-tools 的可执行文件一律不入库（NOTICE.txt / source.properties 保留）
+resources/tools/*.exe
+resources/tools/*.dll

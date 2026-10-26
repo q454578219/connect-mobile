@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: #0b0f14;
+  color: #e6edf3;
+  font-family: 'Microsoft YaHei UI', 'Segoe UI', system-ui, sans-serif;
+  overflow: hidden;
+  user-select: none;
+}
+
+.device-canvas {
+  image-rendering: auto;
+  touch-action: none;
+  /* 模拟指尖触点：自绘的半透明小圆，中心一个亮点 */
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='9' fill='rgba(56,189,248,0.25)' stroke='rgba(125,211,252,0.9)' stroke-width='1.5'/%3E%3Ccircle cx='14' cy='14' r='2' fill='white'/%3E%3C/svg%3E")
+      14 14,
+    crosshair;
+}
